@@ -9,7 +9,7 @@ import (
 )
 
 // 需要映射到数据库casbin_rule表的 orm模型，操作这个model就是操作casbin_rule表
-type CasBinRule struct {
+type casBinRule struct {
 	PType string `json:"ptype"`
 	V0    string `json:"v0"`
 	V1    string `json:"v1"`
