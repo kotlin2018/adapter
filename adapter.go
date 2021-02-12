@@ -9,16 +9,6 @@ import (
 	"github.com/casbin/casbin/v2/persist"
 )
 
-type CasBinRule struct {
-	PType string `json:"ptype"`
-	V0    string `json:"v0"`
-	V1    string `json:"v1"`
-	V2    string `json:"v2"`
-	V3    string `json:"v3"`
-	V4    string `json:"v4"`
-	V5    string `json:"v5"`
-}
-
 // Adapter 用于策略存储的gdb适配器。
 type Adapter struct {
 	DriverName string  // 数据库名，例如: Mysql，PostgreSQL
@@ -71,9 +61,6 @@ func NewAdapterFromOptions(adapter *Adapter) (*Adapter, error) {
 }
 
 func (a *Adapter) open() error {
-	var err error
-	var db gdb.DB
-
 	gdb.SetConfig(gdb.Config{
 		"casbin": gdb.ConfigGroup{
 			gdb.ConfigNode{
@@ -84,7 +71,7 @@ func (a *Adapter) open() error {
 			},
 		},
 	})
-	db, err = gdb.New("casbin")
+	db, err := gdb.New("casbin")
 
 	if err != nil {
 		return err
@@ -112,7 +99,7 @@ func (a *Adapter) dropTable() error {
 	return err
 }
 
-func loadPolicyLine(line CasBinRule, model model.Model) {
+func loadPolicyLine(line casBinRule, model model.Model) {
 	lineText := line.PType
 	if line.V0 != "" {
 		lineText += ", " + line.V0
@@ -138,7 +125,7 @@ func loadPolicyLine(line CasBinRule, model model.Model) {
 
 // LoadPolicy loads policy from database.
 func (a *Adapter) LoadPolicy(model model.Model) error {
-	var lines []CasBinRule
+	var lines []casBinRule
 
 	if err := a.DB.Table(a.TableName).Scan(&lines); err != nil {
 		return err
@@ -151,8 +138,8 @@ func (a *Adapter) LoadPolicy(model model.Model) error {
 	return nil
 }
 
-func savePolicyLine(ptype string, rule []string) CasBinRule {
-	line := CasBinRule{}
+func savePolicyLine(ptype string, rule []string) casBinRule {
+	line := casBinRule{}
 
 	line.PType = ptype
 	if len(rule) > 0 {
@@ -227,7 +214,7 @@ func (a *Adapter) RemovePolicy(sec string, ptype string, rule []string) error {
 
 // RemoveFilteredPolicy removes policy rules that match the filter from the storage.
 func (a *Adapter) RemoveFilteredPolicy(sec string, ptype string, fieldIndex int, fieldValues ...string) error {
-	line := CasBinRule{}
+	line := casBinRule{}
 
 	line.PType = ptype
 	if fieldIndex <= 0 && 0 < fieldIndex+len(fieldValues) {
@@ -252,7 +239,7 @@ func (a *Adapter) RemoveFilteredPolicy(sec string, ptype string, fieldIndex int,
 	return err
 }
 
-func rawDelete(a *Adapter, line CasBinRule) error {
+func rawDelete(a *Adapter, line casBinRule) error {
 	db := a.DB.Table(a.TableName)
 
 	db.Where("ptype = ?", line.PType)
