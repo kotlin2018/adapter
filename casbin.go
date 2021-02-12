@@ -22,19 +22,19 @@ type CasBinRule struct {
 // ReqCasBin 请求参数模型，用于对数据库中policy文件，增、删、改、查。
 //
 // 策略文件 p = sub, obj, act
-type ReqCasBin struct {
+type CasBinModel struct {
 	ID          uint   `json:"id"`
 	PType       string `json:"pType"`    // policy缩写，对应: p
 	AuthorityId string `json:"roleName"` // 操作者ID，对应: sub
 	Path        string `json:"path"`     // 被操作的资源(即: url路径)，对应: obj
 	Method      string `json:"method"`   // 操作的方法，例如: GET、POST，对应: act
 	BaseAdapter *Adapter
-	ReqPolicies []ReqCasBinInfo
+	ReqPolicies []CasBinInfo
 	ModelPath   string `json:"modelPath"` // rbac_model.conf 文件路径
 }
 
 // CasBinInfo 请求参数
-type ReqCasBinInfo struct {
+type CasBinInfo struct {
 	Path   string `p:"path" json:"path"`     // 被操作的资源(即: url路径)，对应: obj
 	Method string `p:"method" json:"method"` // 操作的方法，例如: GET、POST，对应: act
 }
@@ -51,7 +51,7 @@ var (
 
 
 // 持久化到数据库，引入自定义规则
-func (c *ReqCasBin) CasBin() *casbin.Enforcer {
+func (c *CasBinModel) CasBin() *casbin.Enforcer {
 	a, _ := NewAdapterFromOptions(c.BaseAdapter)
 	e, _ := casbin.NewEnforcer(c.ModelPath, a)
 	e.AddFunction("ParamsMatch", ParamsMatchFunc)
@@ -74,7 +74,7 @@ func ParamsMatch(fullNameKey1,key2 string) interface{} {
 }
 
 // AddCasBin 添加权限(添加策略规则)
-func (c *ReqCasBin) AddCasBin() (*casbin.Enforcer,bool) {
+func (c *CasBinModel) AddCasBin() (*casbin.Enforcer,bool) {
 	e := c.CasBin()
 	success, _ := e.AddPolicy(c.AuthorityId, c.Path, c.Method)
 	return e,success
@@ -83,18 +83,18 @@ func (c *ReqCasBin) AddCasBin() (*casbin.Enforcer,bool) {
 // ClearCasBin 清除匹配的权限
 //
 // 从当前策略中删除授权规则，可以指定字段过滤器。底层调用了e.RemoveFilteredPolicy()
-func (c *ReqCasBin) ClearCasBin(v int,p ...string) (*casbin.Enforcer,bool) {
+func (c *CasBinModel) ClearCasBin(v int,p ...string) (*casbin.Enforcer,bool) {
 	e := c.CasBin()
 	success, _ := e.RemoveFilteredPolicy(v, p...)
 	return e,success
 }
 
 // UpdateCasBin 更新casBin权限
-func (c *ReqCasBin) UpdateCasBin() (*casbin.Enforcer,error) {
+func (c *CasBinModel) UpdateCasBin() (*casbin.Enforcer,error) {
 	c.ClearCasBin(0,c.AuthorityId)
 	var rules [][]string
 	for _, v := range c.ReqPolicies {
-		cm := ReqCasBin{
+		cm := CasBinModel{
 			PType: "p",
 			AuthorityId: c.AuthorityId,
 			Path: v.Path,
@@ -112,11 +112,11 @@ func (c *ReqCasBin) UpdateCasBin() (*casbin.Enforcer,error) {
 
 
 // GetCasBinList 获取权限列表
-func (c *ReqCasBin) GetCasBinList()(e *casbin.Enforcer,pathMaps []ReqCasBinInfo) {
+func (c *CasBinModel) GetCasBinList()(e *casbin.Enforcer,pathMaps []CasBinInfo) {
 	e = c.CasBin()
 	list := e.GetFilteredPolicy(0, c.AuthorityId)
 	for _, v := range list {
-		pathMaps = append(pathMaps, ReqCasBinInfo{
+		pathMaps = append(pathMaps, CasBinInfo{
 			Path:   v[1], // 对应 : p = sub, obj, act 中的 obj
 			Method: v[2], // 对应 : p = sub, obj, act 中的 act
 		})
