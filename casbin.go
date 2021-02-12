@@ -39,17 +39,6 @@ type CasBinInfo struct {
 	Method string `p:"method" json:"method"` // 操作的方法，例如: GET、POST，对应: act
 }
 
-var (
-	opts = &Adapter{
-		DriverName: g.Cfg().GetString("casbin.adapter.DriverName"),
-		LinkInfo:   g.Cfg().GetString("casbin.adapter.LinkInfo"),
-		TableName:  g.Cfg().GetString("casbin.adapter.TableName"),
-	}
-	modelPath = g.Cfg().GetString("casbin.ModelPath")
-
-)
-
-
 // 持久化到数据库，引入自定义规则
 func (c *CasBinModel) CasBin() *casbin.Enforcer {
 	a, _ := NewAdapterFromOptions(c.BaseAdapter)
